@@ -7,10 +7,6 @@
 	#include <linux/stmfb.h>
 #endif
 
-#ifndef FB_DEV
-# define FB_DEV "/dev/fb0"
-#endif
-
 class fbClass
 {
 	int fbFd;
@@ -27,7 +23,7 @@ class fbClass
 	int available;
 	struct fb_var_screeninfo screeninfo;
 	fb_cmap cmap;
-	uint16_t red[256], green[256], blue[256], trans[256];
+	__u16 red[256], green[256], blue[256], trans[256];
 	static fbClass *instance;
 	int locked;
 
@@ -35,7 +31,7 @@ class fbClass
 	int m_number_of_pages;
 	int m_phys_mem;
 #ifdef SWIG
-	fbClass(const char *fb=FB_DEV);
+	fbClass(const char *fb="/dev/fb0");
 	~fbClass();
 public:
 #else
@@ -47,24 +43,36 @@ public:
 	int SetMode(int xRes, int yRes, int bpp);
 	void getMode(int &xres, int &yres, int &bpp);
 	int Available() { return available; }
-
+	
 	int getNumPages() { return m_number_of_pages; }
-
+	
 	unsigned long getPhysAddr() { return m_phys_mem; }
-
+	
 	int setOffset(int off);
 	int waitVSync();
 	void blit();
 	unsigned int Stride() { return stride; }
 	fb_cmap *CMAP() { return &cmap; }
 
-	fbClass(const char *fb=FB_DEV);
+	fbClass(const char *fb="/dev/fb0");
 	~fbClass();
-
+	
 			// low level gfx stuff
 	int PutCMAP();
 #endif
 	static fbClass *getInstance();
+#ifdef ENABLE_LIBEPLAYER3
+//	"hack" for libeplayer3 fb access
+	int getFD() { return fbFd; }
+	unsigned char * getLFB_Direct() { return lfb; }
+	int getScreenResX() { return xRes; }
+	int getScreenResY() { return yRes; }
+#endif
+#if defined(__sh__)
+	void clearFBblit();
+	int getFBdiff(int ret);
+	void setFBdiff(int top, int right, int left, int bottom);
+#endif
 
 	int lock();
 	void unlock();
